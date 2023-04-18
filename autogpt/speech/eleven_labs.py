@@ -1,14 +1,18 @@
 """ElevenLabs speech module"""
 import os
-
+import platform
 import requests
-from playsound import playsound
+from pydub import AudioSegment
 
 from autogpt.config import Config
 from autogpt.speech.base import VoiceBase
 
 PLACEHOLDERS = {"your-voice-id"}
 
+if platform.system() == "Windows":
+    PLAYER_CMD = "powershell -c (New-Object Media.SoundPlayer \"{}\").PlaySync() > $null 2>&1"
+else:
+    PLAYER_CMD = "afplay {}"
 
 class ElevenLabsSpeech(VoiceBase):
     """ElevenLabs speech class"""
@@ -19,7 +23,6 @@ class ElevenLabsSpeech(VoiceBase):
         Returns:
             None: None
         """
-
         cfg = Config()
         default_voices = ["ErXwobaYiN019PkySvjV", "EXAVITQu4vr4xnSDxMaL"]
         voice_options = {
@@ -46,15 +49,15 @@ class ElevenLabsSpeech(VoiceBase):
         self._use_custom_voice(cfg.elevenlabs_voice_2_id, 1)
 
     def _use_custom_voice(self, voice, voice_index) -> None:
-        """Use a custom voice if provided and not a placeholder
+        # Use a custom voice if provided and not a placeholder
 
-        Args:
-            voice (str): The voice ID
-            voice_index (int): The voice index
+        # Args:
+        #   voice (str): The voice ID
+        #   voice_index (int): The voice index
 
-        Returns:
-            None: None
-        """
+        # Returns:
+        #   None: None
+
         # Placeholder values that should be treated as empty
         if voice and voice not in PLACEHOLDERS:
             self._voices[voice_index] = voice
@@ -75,10 +78,16 @@ class ElevenLabsSpeech(VoiceBase):
         response = requests.post(tts_url, headers=self._headers, json={"text": text})
 
         if response.status_code == 200:
-            with open("speech.mpeg", "wb") as f:
+            with open("speech.mp3", "wb") as f:
                 f.write(response.content)
-            playsound("speech.mpeg", True)
-            os.remove("speech.mpeg")
+
+            # Convert the MP3 file to a WAV file
+            sound = AudioSegment.from_mp3("speech.mp3")
+            sound.export("speech.wav", format="wav")
+
+            os.system(PLAYER_CMD.format("speech.wav"))
+            os.remove("speech.mp3")
+            os.remove("speech.wav")
             return True
         else:
             print("Request failed with status code:", response.status_code)

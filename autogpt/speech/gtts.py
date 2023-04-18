@@ -16,7 +16,13 @@ class GTTSVoice(VoiceBase):
     def _speech(self, text: str, _: int = 0) -> bool:
         """Play the given text."""
         tts = gtts.gTTS(text)
-        tts.save("speech.mp3")
-        playsound("speech.mp3", True)
-        os.remove("speech.mp3")
+        
+        # Updated file path
+        file_path = os.path.join(os.path.expanduser("~"), "speech.mp3")
+
+        # Save, play, and remove the file using the new path
+        tts.save(file_path)
+        playsound(file_path, True)
+        os.remove(file_path)
+        
         return True
