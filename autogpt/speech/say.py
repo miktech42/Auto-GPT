@@ -1,15 +1,15 @@
 """ Text to speech module """
+from autogpt.config import Config
 import threading
 from threading import Semaphore
-
-from autogpt.config import Config
 from autogpt.speech.brian import BrianSpeech
-from autogpt.speech.eleven_labs import ElevenLabsSpeech
-from autogpt.speech.gtts import GTTSVoice
 from autogpt.speech.macos_tts import MacOSTTS
+from autogpt.speech.gtts import GTTSVoice
+from autogpt.speech.eleven_labs import ElevenLabsSpeech
+from autogpt.speech.microsoft_sapi import MicrosoftSAPIVoice
 
 CFG = Config()
-DEFAULT_VOICE_ENGINE = GTTSVoice()
+DEFAULT_VOICE_ENGINE = MicrosoftSAPIVoice()
 VOICE_ENGINE = None
 if CFG.elevenlabs_api_key:
     VOICE_ENGINE = ElevenLabsSpeech()
@@ -20,11 +20,11 @@ elif CFG.use_brian_tts == "True":
 else:
     VOICE_ENGINE = GTTSVoice()
 
+print(f"Using voice engine: {DEFAULT_VOICE_ENGINE.__class__.__name__}")
 
 QUEUE_SEMAPHORE = Semaphore(
     1
 )  # The amount of sounds to queue before blocking the main thread
-
 
 def say_text(text: str, voice_index: int = 0) -> None:
     """Speak the given text using the given voice index"""
